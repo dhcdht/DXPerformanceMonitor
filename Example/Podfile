@@ -1,0 +1,14 @@
+use_frameworks!
+
+target 'DXPerformanceMonitor_Example' do
+  pod 'DXPerformanceMonitor', :path => '../'
+
+  target 'DXPerformanceMonitor_Tests' do
+    inherit! :search_paths
+
+    pod 'Specta'
+  pod 'Expecta'
+  pod 'FBSnapshotTestCase'
+  pod 'Expecta+Snapshots'
+  end
+end
