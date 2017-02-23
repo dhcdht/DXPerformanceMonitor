@@ -30,7 +30,7 @@ TODO: Add long description of the pod here.
 
   s.ios.deployment_target = '8.0'
 
-  s.source_files = 'DXPerformanceMonitor/Classes/**/*'
+s.source_files = ['DXPerformanceMonitor/*.{h,m,mm}','DXPerformanceMonitor/Classes/**/*']
   
   # s.resource_bundles = {
   #   'DXPerformanceMonitor' => ['DXPerformanceMonitor/Assets/*.png']
