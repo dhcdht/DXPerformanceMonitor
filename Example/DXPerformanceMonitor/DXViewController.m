@@ -22,6 +22,10 @@
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [DXPerformanceMonitor dumpThread];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"resumed");
+        });
     });
 }
 

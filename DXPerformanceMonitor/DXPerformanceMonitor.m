@@ -63,6 +63,40 @@ void ksmc_suspendEnvironment()
     vm_deallocate(thisTask, (vm_address_t)threads, sizeof(thread_t) * numThreads);
 }
 
+void ksmc_resumeEnvironment()
+{
+    kern_return_t kr;
+    const task_t thisTask = mach_task_self();
+    const thread_t thisThread = (thread_t)ksthread_self();
+    thread_act_array_t threads;
+    mach_msg_type_number_t numThreads;
+    
+    if((kr = task_threads(thisTask, &threads, &numThreads)) != KERN_SUCCESS)
+    {
+        NSLog(@"task_threads: %s", mach_error_string(kr));
+        return;
+    }
+    
+    for(mach_msg_type_number_t i = 0; i < numThreads; i++)
+    {
+        thread_t thread = threads[i];
+        if(thread != thisThread)
+        {
+            if((kr = thread_resume(thread)) != KERN_SUCCESS)
+            {
+                // Record the error and keep going.
+                NSLog(@"thread_resume (%08x): %s", thread, mach_error_string(kr));
+            }
+        }
+    }
+    
+    for(mach_msg_type_number_t i = 0; i < numThreads; i++)
+    {
+        mach_port_deallocate(thisTask, threads[i]);
+    }
+    vm_deallocate(thisTask, (vm_address_t)threads, sizeof(thread_t) * numThreads);
+}
+
 bool kscpu_i_fillState(const thread_t thread,
                        const thread_state_t state,
                        const thread_state_flavor_t flavor,
@@ -134,6 +168,7 @@ bool ksmc_getContextForThread(thread_t thread, KSMachineContext* destinationCont
     }
     
     NSLog(@"done");
+    ksmc_resumeEnvironment();
 }
 
 @end
