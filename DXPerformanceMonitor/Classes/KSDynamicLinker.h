@@ -36,55 +36,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct
-{
-    uint64_t address;
-    uint64_t vmAddress;
-    uint64_t size;
-    const char* name;
-    const uint8_t* uuid;
-    int cpuType;
-    int cpuSubType;
-    uint64_t majorVersion;
-    uint64_t minorVersion;
-    uint64_t revisionVersion;
-} KSBinaryImage;
-
-/** Get the number of loaded binary images.
- */
-int ksdl_imageCount();
-
-/** Get information about a binary image.
- *
- * @param index The binary index.
- *
- * @param buffer A structure to hold the information.
- *
- * @return True if the image was successfully queried.
- */
-bool ksdl_getBinaryImage(int index, KSBinaryImage* buffer);
-
-/** Find a loaded binary image with the specified name.
- *
- * @param imageName The image name to look for.
- *
- * @param exactMatch If true, look for an exact match instead of a partial one.
- *
- * @return the index of the matched image, or UINT32_MAX if not found.
- */
-uint32_t ksdl_imageNamed(const char* const imageName, bool exactMatch);
-
-/** Get the UUID of a loaded binary image with the specified name.
- *
- * @param imageName The image name to look for.
- *
- * @param exactMatch If true, look for an exact match instead of a partial one.
- *
- * @return A pointer to the binary (16 byte) UUID of the image, or NULL if it
- *         wasn't found.
- */
-const uint8_t* ksdl_imageUUID(const char* const imageName, bool exactMatch);
-
 /** async-safe version of dladdr.
  *
  * This method searches the dynamic loader for information about any image

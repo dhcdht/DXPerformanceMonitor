@@ -31,8 +31,6 @@
 #include <mach-o/nlist.h>
 #include <string.h>
 
-//#include "KSLogger.h"
-
 #ifdef __LP64__
     #define STRUCT_NLIST struct nlist_64
 #else
@@ -156,64 +154,6 @@ static uintptr_t segmentBaseOfImageIndex(const uint32_t idx)
     return 0;
 }
 
-uint32_t ksdl_imageNamed(const char* const imageName, bool exactMatch)
-{
-    if(imageName != NULL)
-    {
-        const uint32_t imageCount = _dyld_image_count();
-
-        for(uint32_t iImg = 0; iImg < imageCount; iImg++)
-        {
-            const char* name = _dyld_get_image_name(iImg);
-            if(exactMatch)
-            {
-                if(strcmp(name, imageName) == 0)
-                {
-                    return iImg;
-                }
-            }
-            else
-            {
-                if(strstr(name, imageName) != NULL)
-                {
-                    return iImg;
-                }
-            }
-        }
-    }
-    return UINT32_MAX;
-}
-
-const uint8_t* ksdl_imageUUID(const char* const imageName, bool exactMatch)
-{
-    if(imageName != NULL)
-    {
-        const uint32_t iImg = ksdl_imageNamed(imageName, exactMatch);
-        if(iImg != UINT32_MAX)
-        {
-            const struct mach_header* header = _dyld_get_image_header(iImg);
-            if(header != NULL)
-            {
-                uintptr_t cmdPtr = firstCmdAfterHeader(header);
-                if(cmdPtr != 0)
-                {
-                    for(uint32_t iCmd = 0;iCmd < header->ncmds; iCmd++)
-                    {
-                        const struct load_command* loadCmd = (struct load_command*)cmdPtr;
-                        if(loadCmd->cmd == LC_UUID)
-                        {
-                            struct uuid_command* uuidCmd = (struct uuid_command*)cmdPtr;
-                            return uuidCmd->uuid;
-                        }
-                        cmdPtr += loadCmd->cmdsize;
-                    }
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
 bool ksdl_dladdr(const uintptr_t address, Dl_info* const info)
 {
     info->dli_fname = NULL;
@@ -292,88 +232,6 @@ bool ksdl_dladdr(const uintptr_t address, Dl_info* const info)
         }
         cmdPtr += loadCmd->cmdsize;
     }
-    
-    return true;
-}
-
-int ksdl_imageCount()
-{
-    return (int)_dyld_image_count();
-}
-
-bool ksdl_getBinaryImage(int index, KSBinaryImage* buffer)
-{
-    const struct mach_header* header = _dyld_get_image_header((unsigned)index);
-    if(header == NULL)
-    {
-        return false;
-    }
-    
-    uintptr_t cmdPtr = firstCmdAfterHeader(header);
-    if(cmdPtr == 0)
-    {
-        return false;
-    }
-    
-    // Look for the TEXT segment to get the image size.
-    // Also look for a UUID command.
-    uint64_t imageSize = 0;
-    uint64_t imageVmAddr = 0;
-    uint64_t version = 0;
-    uint8_t* uuid = NULL;
-    
-    for(uint32_t iCmd = 0; iCmd < header->ncmds; iCmd++)
-    {
-        struct load_command* loadCmd = (struct load_command*)cmdPtr;
-        switch(loadCmd->cmd)
-        {
-            case LC_SEGMENT:
-            {
-                struct segment_command* segCmd = (struct segment_command*)cmdPtr;
-                if(strcmp(segCmd->segname, SEG_TEXT) == 0)
-                {
-                    imageSize = segCmd->vmsize;
-                    imageVmAddr = segCmd->vmaddr;
-                }
-                break;
-            }
-            case LC_SEGMENT_64:
-            {
-                struct segment_command_64* segCmd = (struct segment_command_64*)cmdPtr;
-                if(strcmp(segCmd->segname, SEG_TEXT) == 0)
-                {
-                    imageSize = segCmd->vmsize;
-                    imageVmAddr = segCmd->vmaddr;
-                }
-                break;
-            }
-            case LC_UUID:
-            {
-                struct uuid_command* uuidCmd = (struct uuid_command*)cmdPtr;
-                uuid = uuidCmd->uuid;
-                break;
-            }
-            case LC_ID_DYLIB:
-            {
-                
-                struct dylib_command* dc = (struct dylib_command*)cmdPtr;
-                version = dc->dylib.current_version;
-                break;
-            }
-        }
-        cmdPtr += loadCmd->cmdsize;
-    }
-
-    buffer->address = (uintptr_t)header;
-    buffer->vmAddress = imageVmAddr;
-    buffer->size = imageSize;
-    buffer->name = _dyld_get_image_name((unsigned)index);
-    buffer->uuid = uuid;
-    buffer->cpuType = header->cputype;
-    buffer->cpuSubType = header->cpusubtype;
-    buffer->majorVersion = version >> 16;
-    buffer->minorVersion = (version >> 8) & 0xff;
-    buffer->revisionVersion = version & 0xff;
     
     return true;
 }
