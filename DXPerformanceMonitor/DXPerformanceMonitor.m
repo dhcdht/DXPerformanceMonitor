@@ -162,6 +162,9 @@ bool ksmc_getContextForThread(thread_t thread, KSMachineContext* destinationCont
             NSLog(@"begin thread %s : %i", ptName, i);
             while (stackCursor.advanceCursor(&stackCursor)) {
                 NSLog(@"%p", stackCursor.stackEntry.address);
+                if (stackCursor.symbolicate(&stackCursor)) {
+                    NSLog(@"imageName : %s , symbolName : %s , symbolAddress : %p", stackCursor.stackEntry.imageName, stackCursor.stackEntry.symbolName, stackCursor.stackEntry.symbolAddress);
+                }
             }
             NSLog(@"end thread %s : %i", ptName, i);
         }
